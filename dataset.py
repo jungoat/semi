@@ -19,7 +19,6 @@ class KolektorSDD2Dataset(Dataset):
             T.ToTensor()
         ])
 
-        # 온라인 증강 (반전 + 회전만)
         self.augment_transform = T.Compose([
             T.RandomHorizontalFlip(p=0.5),
             T.RandomVerticalFlip(p=0.5),
