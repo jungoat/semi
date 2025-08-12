@@ -1,3 +1,4 @@
+# dataset.py
 import os
 import pandas as pd
 from torch.utils.data import Dataset
@@ -6,11 +7,23 @@ import torchvision.transforms as T
 import torch
 
 class KolektorSDD2Dataset(Dataset):
-    def __init__(self, csv_path, img_dir, img_size=64, class_column="class_id"):
-        self.df = pd.read_csv(csv_path).dropna(subset=['patch_name'])
-        self.img_dir = img_dir
+    def __init__(self, csv_path, img_size=64, class_column="class_id", augment=False):
+        self.df = pd.read_csv(csv_path).dropna(subset=['patch_path'])
         self.class_column = class_column
-        self.transform = T.Compose([
+        self.augment = augment  # True면 온라인 증강 적용
+
+        # 기본 전처리
+        self.base_transform = T.Compose([
+            T.Resize((img_size, img_size)),
+            T.Grayscale(num_output_channels=1),
+            T.ToTensor()
+        ])
+
+        # 온라인 증강 (반전 + 회전만)
+        self.augment_transform = T.Compose([
+            T.RandomHorizontalFlip(p=0.5),
+            T.RandomVerticalFlip(p=0.5),
+            T.RandomRotation(degrees=15),
             T.Resize((img_size, img_size)),
             T.Grayscale(num_output_channels=1),
             T.ToTensor()
@@ -21,14 +34,17 @@ class KolektorSDD2Dataset(Dataset):
     
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
+        img_path = row['patch_path']
         class_id = int(row[self.class_column])
-        patch_name = row["patch_name"]
 
-        img_path = os.path.join(self.img_dir, f"class_{class_id}", patch_name)
         if not os.path.exists(img_path):
             raise FileNotFoundError(f"Image not found: {img_path}")
 
-        x1 = Image.open(img_path).convert("RGB")
-        x1 = self.transform(x1)
+        img = Image.open(img_path).convert("RGB")
 
-        return x1, torch.tensor(class_id, dtype=torch.long)
+        if self.augment:
+            img = self.augment_transform(img)
+        else:
+            img = self.base_transform(img)
+
+        return img, torch.tensor(class_id, dtype=torch.long)

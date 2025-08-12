@@ -28,11 +28,11 @@ class FlawMatchTrainer:
         # Optimizer
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
 
-        # Dataset & Loader
+        # Dataset & Loader (학습 시 augment=True 적용)
         dataset = KolektorSDD2Dataset(
             csv_path=args.train_csv,
-            img_dir=args.img_dir,
-            img_size=64
+            img_size=64,
+            augment=True  # 온라인 증강 적용
         )
         self.loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
 
@@ -110,6 +110,6 @@ if __name__ == "__main__":
     parser.add_argument("--class_drop_rate", type=float, default=0.1)
 
     args = parser.parse_args()
-#
+
     trainer = FlawMatchTrainer(args)
     trainer.train()
