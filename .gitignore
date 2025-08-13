@@ -1,0 +1,11 @@
+# image
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.bmp
+*.gif
+*.svg
+
+*.json
